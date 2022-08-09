@@ -1,4 +1,5 @@
 # import imp
+from email.policy import default
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -17,6 +18,9 @@ import time
 
 # title
 st.title("Exp Command Generator")
+
+# experiment mode
+exp_mode = st.selectbox("Select Experiment Mode", ["OneExpOnecard", "MultipleExpOnecard"],key="MultipleExpOnecard")
 
 ## 检查框
 debug = st.checkbox("Debug:选择则会串行地执行命令", value=True)
@@ -41,19 +45,26 @@ lr=5e-5""")
 
 ## gpu 相关参数
 gpu_list = st.multiselect("multi select", range(10), [1, 2, 3, 4, 5, 6, 7, 8, 9])
-print(gpu_list)
-allow_gpu_memory_threshold = st.number_input("最小单卡剩余容量", value=5000, min_value=0, max_value=30000, step=1000)
-gpu_threshold = st.number_input("最大单卡利用率", value=70, min_value=0, max_value=100, step=10)
+# print(gpu_list)
+if exp_mode == "OneExpOnecard":
+    allow_gpu_memory_threshold_default = 20000
+    gpu_threshold_default = 1
+elif exp_mode == "MultipleExpOnecard":
+    allow_gpu_memory_threshold_default = 5000
+    gpu_threshold_default = 70
+allow_gpu_memory_threshold = st.number_input("最小单卡剩余容量", value=allow_gpu_memory_threshold_default, min_value=0, max_value=30000, step=1000)
+gpu_threshold = st.number_input("最大单卡利用率", value=gpu_threshold_default, min_value=0, max_value=100, step=10)
 sleep_time_after_loading_task= st.number_input("加载任务后等待秒数", value=20, min_value=0,step=5)
 all_full_sleep_time = st.number_input("全满之后等待秒数", value=20, min_value=0,step=5)
 
 gpu_list_str = ' '.join([str(i) for i in gpu_list])
-gpu_hyper = f"gpu=({gpu_list_str})\n"
+gpu_hyper = "gpu=$\{#gpu[@]}\n"
 gpu_hyper+=f"allow_gpu_memory_threshold={allow_gpu_memory_threshold}\n"
 gpu_hyper+=f"gpu_threshold={gpu_threshold}\n"
 gpu_hyper+=f"sleep_time_after_loading_task={sleep_time_after_loading_task}s\n"
 gpu_hyper+=f"all_full_sleep_time={all_full_sleep_time}s\n"
 gpu_hyper+=f"gpunum={len(gpu_list)}\n"
+gpu_hyper+="i=0\n"
 
 main_loop = st.text_area("Main loop", """for lambda_1 in 1 3;do
   for lambda_2 in 1 10;do
@@ -83,7 +94,6 @@ if g:
     s += gpu_hyper + "\n\n"
     s += hyper_loop + "\n\n"
     s += """
-i=0 # we search from the first gpu
 while true; do
     gpu_id=${gpu[$i]}
 #    nvidia-smi --query-gpu=utilization.gpu  --format=csv -i 2 | grep -Eo "[0-9]+"
@@ -103,6 +113,10 @@ while true; do
 done
 
 gpu_id=${gpu[$i]}
+# search from the next gpu
+i=`expr $i + 1`
+i=`expr $i % $gpunum`
+
 free_mem=$(nvidia-smi --query-gpu=memory.free --format=csv -i $gpu_id | grep -Eo "[0-9]+")
 gpu_u=$(nvidia-smi --query-gpu=utilization.gpu  --format=csv -i $gpu_id | grep -Eo "[0-9]+")
 export CUDA_VISIBLE_DEVICES=$gpu_id
@@ -113,7 +127,10 @@ echo "use gpu id is ${gpu[$i]}, free memory is $free_mem, it utilization is ${gp
     s += "echo ==========================================================================================\n"
     if debug:
         s += "$com\n"
+        s += "# mkdir -p ./logs/\n"
+        s += "# nohup $com > ./logs/$exp_name-$RANDOM.log 2>&1 &\n"
     else:
+        s += "# $com\n"
         s += "mkdir -p ./logs/\n"
         s += "nohup $com > ./logs/$exp_name-$RANDOM.log 2>&1 &\n"
     s += """echo "sleep for $sleep_time_after_loading_task to wait the task loaded"
