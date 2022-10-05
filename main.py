@@ -50,7 +50,7 @@ if exp_mode == "OneExpOnecard":
     allow_gpu_memory_threshold_default = 20000
     gpu_threshold_default = 1
 elif exp_mode == "MultipleExpOnecard":
-    allow_gpu_memory_threshold_default = 5000
+    allow_gpu_memory_threshold_default = 3000
     gpu_threshold_default = 70
 allow_gpu_memory_threshold = st.number_input("最小单卡剩余容量", value=allow_gpu_memory_threshold_default, min_value=0, max_value=30000, step=1000)
 gpu_threshold = st.number_input("最大单卡利用率", value=gpu_threshold_default, min_value=0, max_value=100, step=10)
@@ -58,12 +58,12 @@ sleep_time_after_loading_task= st.number_input("加载任务后等待秒数", va
 all_full_sleep_time = st.number_input("全满之后等待秒数", value=20, min_value=0,step=5)
 
 gpu_list_str = ' '.join([str(i) for i in gpu_list])
-gpu_hyper = "gpu=$\{#gpu[@]}\n"
+gpu_hyper = f"gpu=({gpu_list_str})\n"
 gpu_hyper+=f"allow_gpu_memory_threshold={allow_gpu_memory_threshold}\n"
 gpu_hyper+=f"gpu_threshold={gpu_threshold}\n"
 gpu_hyper+=f"sleep_time_after_loading_task={sleep_time_after_loading_task}s\n"
 gpu_hyper+=f"all_full_sleep_time={all_full_sleep_time}s\n"
-gpu_hyper+=f"gpunum={len(gpu_list)}\n"
+gpu_hyper+="gpunum=${#gpu[@]}\n"
 gpu_hyper+="i=0\n"
 
 main_loop = st.text_area("Main loop", """for lambda_1 in 1 3;do
@@ -77,13 +77,17 @@ main_loop = st.text_area("Main loop", """for lambda_1 in 1 3;do
                 --K $K  --seed $seed --train_mode adv_train --bsize $bsize --n_epoch $n_epoch --lr $lr \
                 --eval_baseline
 done;done;done;done;done;""")
-
-hyper_loop = main_loop.split("python")[0]
+if 'python' in main_loop:
+    hyper_loop = main_loop.split("python")[0]
+    python_cmd = main_loop[main_loop.index('python'):].split('done;')[0]
+elif 'bash' in main_loop:
+    hyper_loop = main_loop.split("bash")[0]
+    python_cmd = main_loop[main_loop.index('bash'):].split('done;')[0]
 print(hyper_loop)
-python_cmd = main_loop.split(";do\n")[-1].split('done;')[0]
 print(python_cmd)
-end_loop = "done;"*hyper_loop.count("\n")
+end_loop = "done;"*hyper_loop.count("for")
 print(end_loop)
+
 
 
 g = st.button("Generate")
