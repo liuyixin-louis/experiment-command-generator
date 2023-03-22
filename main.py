@@ -20,17 +20,17 @@ import time
 st.title("Exp Command Generator")
 
 # experiment mode
-exp_mode = st.selectbox("Select Experiment Mode", ["OneExpOnecard", "MultipleExpOnecard"],key="MultipleExpOnecard")
+exp_mode = st.sidebar.selectbox("Select Experiment Mode", ["OneExpOnecard", "MultipleExpOnecard"],key="MultipleExpOnecard")
 
 ## 检查框
-debug = st.checkbox("Debug:选择则会串行地执行命令", value=True)
-# st.write(f"checkbox的值是{res}")
+debug = st.sidebar.checkbox("Debug:选择则会串行地执行命令", value=True)
+# st.sidebar.write(f"checkbox的值是{res}")
 
-setup = st.text_area("Some setup of env at beginning.", """cd $(dirname $(dirname $0))
+setup = st.sidebar.text_area("Some setup of env at beginning.", """cd $(dirname $(dirname $0))
 source activate xai
 export PYTHONPATH=${PYTHONPATH}:/Users/apple/Desktop/workspace/research_project/attention:/mnt/yixin/:/home/yila22/prj""")
 
-exp_hyper = st.text_area("Hyperparameters", """exp_name="debug-adv-training-emotion"
+exp_hyper = st.sidebar.text_area("Hyperparameters", """exp_name="debug-adv-training-emotion"
 dataset=emotion
 n_epoch=3
 K=3
@@ -44,7 +44,7 @@ bsize=8
 lr=5e-5""")
 
 ## gpu 相关参数
-gpu_list = st.multiselect("multi select", range(10), [1, 2, 3, 4, 5, 6, 7, 8, 9])
+gpu_list = st.sidebar.multiselect("multi select", range(10), [5, 6, 7, 8, 9])
 # print(gpu_list)
 if exp_mode == "OneExpOnecard":
     allow_gpu_memory_threshold_default = 20000
@@ -52,10 +52,10 @@ if exp_mode == "OneExpOnecard":
 elif exp_mode == "MultipleExpOnecard":
     allow_gpu_memory_threshold_default = 3000
     gpu_threshold_default = 70
-allow_gpu_memory_threshold = st.number_input("最小单卡剩余容量", value=allow_gpu_memory_threshold_default, min_value=0, max_value=30000, step=1000)
-gpu_threshold = st.number_input("最大单卡利用率", value=gpu_threshold_default, min_value=0, max_value=100, step=10)
-sleep_time_after_loading_task= st.number_input("加载任务后等待秒数", value=20, min_value=0,step=5)
-all_full_sleep_time = st.number_input("全满之后等待秒数", value=20, min_value=0,step=5)
+allow_gpu_memory_threshold = st.sidebar.number_input("最小单卡剩余容量", value=allow_gpu_memory_threshold_default, min_value=0, max_value=30000, step=1000)
+gpu_threshold = st.sidebar.number_input("最大单卡利用率", value=gpu_threshold_default, min_value=0, max_value=100, step=10)
+sleep_time_after_loading_task= st.sidebar.number_input("加载任务后等待秒数", value=20, min_value=0,step=5)
+all_full_sleep_time = st.sidebar.number_input("全满之后等待秒数", value=20, min_value=0,step=5)
 
 gpu_list_str = ' '.join([str(i) for i in gpu_list])
 gpu_hyper = f"gpu=({gpu_list_str})\n"
@@ -87,8 +87,6 @@ print(hyper_loop)
 print(python_cmd)
 end_loop = "done;"*hyper_loop.count("for")
 print(end_loop)
-
-
 
 g = st.button("Generate")
 if g:
@@ -142,6 +140,8 @@ echo "use gpu id is ${gpu[$i]}, free memory is $free_mem, it utilization is ${gp
     s += end_loop
     st.success("Finished")
     st.code(s, language="shell")
-    
+  
+
+  
 
 
