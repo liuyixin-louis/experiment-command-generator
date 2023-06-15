@@ -1,19 +1,7 @@
 
-username=yila22
-max_gpu_utilization=90
-total_gpu_memory=24564
-max_gpu_memory_gap=5000
-available_devices=( 0 1 2 3 4 )
-current_device_idx=-1
-sleeptime=10
-cpu_mean_max=77
-memory_rate_max=80
-constrain_total=True
-constrain_mine=True
-constrain_rate=True
+update_device_command = "update_device_idx;\n"
 
-
-
+update_device_func = """
 function update_device_idx {
     if [ $constrain_total = true ]; then
     # check total cpu usage
@@ -116,3 +104,4 @@ function update_device_idx {
     echo "current device: ${available_devices[$current_device_idx]}"
     device=${available_devices[$current_device_idx]}
 }
+"""

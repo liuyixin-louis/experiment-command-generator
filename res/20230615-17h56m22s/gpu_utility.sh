@@ -9,8 +9,8 @@ sleeptime=10
 cpu_mean_max=77
 memory_rate_max=80
 constrain_total=True
-constrain_mine=True
-constrain_rate=True
+constrain_mine=False
+constrain_rate=2
 
 
 

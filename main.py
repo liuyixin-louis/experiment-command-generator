@@ -4,144 +4,161 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import time
-# import matplotlib.pyplot as plt
-# import seaborn as sns
-# import plotly.figure_factory as ff
-# import altair as alt
-# from PIL import Image
-# import base64
-# import tarfile
-# import os
-# import requests
-
+from config import  update_device_func
+from parse_code import parse_base_code
 
 
 # title
 st.title("Exp Command Generator")
 
 # experiment mode
-exp_mode = st.sidebar.selectbox("Select Experiment Mode", ["OneExpOnecard", "MultipleExpOnecard"],key="MultipleExpOnecard")
+# exp_mode = st.sidebar.selectbox("Select Experiment Mode", ["OneExpOnecard", "MultipleExpOnecard"],key="MultipleExpOnecard")
 
 ## 检查框
-debug = st.sidebar.checkbox("Debug:选择则会串行地执行命令", value=True)
+debug = st.sidebar.checkbox("Debug: 选择则会串行地执行命令", value=True)
 # st.sidebar.write(f"checkbox的值是{res}")
 
-setup = st.sidebar.text_area("Some setup of env at beginning.", """cd $(dirname $(dirname $0))
-source activate xai
-export PYTHONPATH=${PYTHONPATH}:/Users/apple/Desktop/workspace/research_project/attention:/mnt/yixin/:/home/yila22/prj""")
+# setup = st.sidebar.text_area("Some setup of env at beginning.", """cd $(dirname $(dirname $0))
+# source activate xai
+# export PYTHONPATH=${PYTHONPATH}:/Users/apple/Desktop/workspace/research_project/attention:/mnt/yixin/:/home/yila22/prj""")
 
-exp_hyper = st.sidebar.text_area("Hyperparameters", """exp_name="debug-adv-training-emotion"
-dataset=emotion
-n_epoch=3
-K=3
-encoder=bert
-lambda_1=1
-lambda_2=1
-x_pgd_radius=0.01
-pgd_radius=0.001
-seed=2
-bsize=8
-lr=5e-5""")
+# exp_hyper = st.sidebar.text_area("Hyperparameters", """exp_name="debug-adv-training-emotion"
+# dataset=emotion
+# n_epoch=3
+# K=3
+# encoder=bert
+# lambda_1=1
+# lambda_2=1
+# x_pgd_radius=0.01
+# pgd_radius=0.001
+# seed=2
+# bsize=8
+# lr=5e-5""")
 
 ## gpu 相关参数
-gpu_list = st.sidebar.multiselect("multi select", range(10), [5, 6, 7, 8, 9])
+gpu_list = st.sidebar.multiselect("multi select", range(10), [0,1,2,3,4,])
 # print(gpu_list)
-if exp_mode == "OneExpOnecard":
-    allow_gpu_memory_threshold_default = 20000
-    gpu_threshold_default = 1
-elif exp_mode == "MultipleExpOnecard":
-    allow_gpu_memory_threshold_default = 3000
-    gpu_threshold_default = 70
-allow_gpu_memory_threshold = st.sidebar.number_input("最小单卡剩余容量", value=allow_gpu_memory_threshold_default, min_value=0, max_value=30000, step=1000)
-gpu_threshold = st.sidebar.number_input("最大单卡利用率", value=gpu_threshold_default, min_value=0, max_value=100, step=10)
-sleep_time_after_loading_task= st.sidebar.number_input("加载任务后等待秒数", value=20, min_value=0,step=5)
-all_full_sleep_time = st.sidebar.number_input("全满之后等待秒数", value=20, min_value=0,step=5)
+allow_gpu_memory_threshold_default=5000
+gpu_threshold_default=90
+total_gpu_memory = st.sidebar.number_input("单卡总容量", value=24564, min_value=0, max_value=30000, step=1000)
+max_gpu_memory_gap = st.sidebar.number_input("最小单卡剩余容量", value=allow_gpu_memory_threshold_default, min_value=0, max_value=total_gpu_memory, step=500)
+max_gpu_utilization = st.sidebar.number_input("最大单卡利用率", value=gpu_threshold_default, min_value=0, max_value=100, step=10)
+sleep_time_after_loading_task= st.sidebar.number_input("加载任务后等待秒数", value=10, min_value=0,step=5)
+# all_full_sleep_time = st.sidebar.number_input("全满之后等待秒数", value=20, min_value=0,step=5)
+username = st.sidebar.text_input("用户名", value="yila22")
+cpu_max_utility = st.sidebar.number_input("cpu最大利用率", value=77, min_value=0, max_value=100, step=1)
+memory_max_utility = st.sidebar.number_input("内存最大利用率", value=80, min_value=0, max_value=100, step=1)
+constrain_total = st.sidebar.checkbox("限制总资源", value=True)
+constrain_mine = st.sidebar.checkbox("限制我的资源", value=False)
+constrain_rate = st.sidebar.number_input("限制率", value=2, min_value=1, max_value=10, step=1)
 
-gpu_list_str = ' '.join([str(i) for i in gpu_list])
-gpu_hyper = f"gpu=({gpu_list_str})\n"
-gpu_hyper+=f"allow_gpu_memory_threshold={allow_gpu_memory_threshold}\n"
-gpu_hyper+=f"gpu_threshold={gpu_threshold}\n"
-gpu_hyper+=f"sleep_time_after_loading_task={sleep_time_after_loading_task}s\n"
-gpu_hyper+=f"all_full_sleep_time={all_full_sleep_time}s\n"
-gpu_hyper+="gpunum=${#gpu[@]}\n"
-gpu_hyper+="i=0\n"
+# username_mine=root
+# max_gpu_utilization=90
+# total_gpu_memory=24564
+# max_gpu_memory_gap=5000
+# available_devices=( 0 1 2 3 4 5 6 7 8 9 )
+# current_device_idx=-1
+# sleeptime=30
+# cpu_mean_max=77
+# memory_rate_max=80
+# constrain_total=true
+# constrain_mine=false
+# constrain_rate=2
+gpu_list = " ".join([str(i) for i in gpu_list])
+setup_for_gpu_utility = f"""
+username={username}
+max_gpu_utilization={max_gpu_utilization}
+total_gpu_memory={total_gpu_memory}
+max_gpu_memory_gap={max_gpu_memory_gap}
+available_devices=( {gpu_list} )
+current_device_idx=-1
+sleeptime={sleep_time_after_loading_task}
+cpu_mean_max={cpu_max_utility}
+memory_rate_max={memory_max_utility}
+constrain_total={constrain_total}
+constrain_mine={constrain_mine}
+constrain_rate={constrain_rate}
+"""
 
-main_loop = st.text_area("Main loop", """for lambda_1 in 1 3;do
-  for lambda_2 in 1 10;do
-    for n_epoch in 3;do
-      for x_pgd_radius in 0.005 0.01;do
-        for pgd_radius in 0.0005 0.001 0.002;do
-          python train.py --dataset $dataset --data_dir . --output_dir ./outputs/ --attention tanh \
-              --encoder $encoder \
-                --exp_name $exp_name --lambda_1 $lambda_1 --lambda_2 $lambda_2 --pgd_radius $pgd_radius --x_pgd_radius $x_pgd_radius \
-                --K $K  --seed $seed --train_mode adv_train --bsize $bsize --n_epoch $n_epoch --lr $lr \
-                --eval_baseline
-done;done;done;done;done;""")
-if 'python' in main_loop:
-    hyper_loop = main_loop.split("python")[0]
-    python_cmd = main_loop[main_loop.index('python'):].split('done;')[0]
-elif 'bash' in main_loop:
-    hyper_loop = main_loop.split("bash")[0]
-    python_cmd = main_loop[main_loop.index('bash'):].split('done;')[0]
-print(hyper_loop)
-print(python_cmd)
-end_loop = "done;"*hyper_loop.count("for")
-print(end_loop)
+
+base_code = st.text_area("Base Code", """##### setup
+export CUDA_VISIBLE_DEVICES=2
+source activate /data/yixin/anaconda/mib
+exp_name="single_user"
+#####
+
+##### loop
+for poison_method in char_basic word_basic sent_basic; do
+for dataset_idx in 0 1 2; do
+#####
+
+##### main
+  python single_user.py --dataset_idx $dataset_idx --trigger_size 1 --target 0 \
+   --loc 0 --batch_size 16 --num_epochs 2 --poison_method $poison_method --lr 5e-5 --pattern 0 --exp_name $exp_name \
+    --log_wb
+#####
+
+#####
+done;done;
+#####""", height=400)
+
+
 
 g = st.button("Generate")
 if g:
-    s = ""
-    s += setup + "\n\n"
-    s += exp_hyper + "\n\n"
-    s += gpu_hyper + "\n\n"
-    s += hyper_loop + "\n\n"
-    s += """
-while true; do
-    gpu_id=${gpu[$i]}
-#    nvidia-smi --query-gpu=utilization.gpu  --format=csv -i 2 | grep -Eo "[0-9]+"
-    gpu_u=$(nvidia-smi --query-gpu=utilization.gpu  --format=csv -i $gpu_id | grep -Eo "[0-9]+")
-    free_mem=$(nvidia-smi --query-gpu=memory.free --format=csv -i $gpu_id | grep -Eo "[0-9]+")
-    if [[ $free_mem -lt $allow_gpu_memory_threshold || $gpu_u -ge ${gpu_threshold} ]]; then
-        i=`expr $i + 1`
-        i=`expr $i % $gpunum`
-        echo "gpu id ${gpu[$i]} is full loaded, skip"
-        if [ "$i" == "0" ]; then
-            sleep ${all_full_sleep_time}
-            echo "all the gpus are full, sleep 1m"
-        fi
-    else
-        break
-    fi
-done
-
-gpu_id=${gpu[$i]}
-# search from the next gpu
-i=`expr $i + 1`
-i=`expr $i % $gpunum`
-
-free_mem=$(nvidia-smi --query-gpu=memory.free --format=csv -i $gpu_id | grep -Eo "[0-9]+")
-gpu_u=$(nvidia-smi --query-gpu=utilization.gpu  --format=csv -i $gpu_id | grep -Eo "[0-9]+")
-export CUDA_VISIBLE_DEVICES=$gpu_id
-echo "use gpu id is ${gpu[$i]}, free memory is $free_mem, it utilization is ${gpu_u}%"
-"""
-    s += f"""com="{python_cmd}"\n"""
-    s += "echo $com\n"
-    s += "echo ==========================================================================================\n"
-    if debug:
-        s += "$com\n"
-        s += "# mkdir -p ./logs/\n"
-        s += "# nohup $com > ./logs/$exp_name-$RANDOM.log 2>&1 &\n"
-    else:
-        s += "# $com\n"
-        s += "mkdir -p ./logs/\n"
-        s += "nohup $com > ./logs/$exp_name-$RANDOM.log 2>&1 &\n"
-    s += """echo "sleep for $sleep_time_after_loading_task to wait the task loaded"
-    sleep  $sleep_time_after_loading_task\n"""
-    s += end_loop
     st.success("Finished")
-    st.code(s, language="shell")
-  
-
-  
+    contents = base_code
+    gpu_utility = ""
+    gpu_utility = setup_for_gpu_utility + "\n\n" + update_device_func 
+    
+    
+    new_code = parse_base_code(contents, debug=debug)
+    
+    # create file for download 
+    timestr = time.strftime("%Y%m%d-%Hh%Mm%Ss")
+    import os 
+    os.makedirs(f"./res/{timestr}", exist_ok=True)
+    filename_script = f"./res/{timestr}/script.sh"
+    with open(filename_script, "w") as f:
+        f.write(new_code)
+    filename_config = f"./res/{timestr}/gpu_utility.sh"
+    with open(filename_config, "w") as f:
+        f.write(gpu_utility)
+    
+    # zip them into one file
+    # import shutil
+    # shutil.make_archive(f"./res/{timestr}", 'zip', f"./res/{timestr}")
+    # st.download_button(
+    #     label="Download zip",
+    #     data=f"./res/{timestr}.zip",
+    #     file_name=f"{timestr}.zip",
+    #     mime="application/zip",
+    # )
+    
+    
+    st.download_button(
+        label="Download script",
+        data=new_code,
+        file_name=filename_script,
+        mime="text/plain",
+    )
+    # after clicking i don't want the website to refresh
+    st.download_button(
+        label="Download gpu_utility.sh",
+        data=gpu_utility,
+        file_name=filename_config,
+        mime="text/plain",
+    )
+    
+    # st.markdown(f"### [Download script](./{filename_script})")
+    # st.markdown(f"### [Download gpu_utility.sh](P{filename_config})")
+    st.markdown("## script.sh")
+    st.code(new_code, language="shell")
+    
+    
+    st.markdown("## gpu_utility.sh")
+    st.code(gpu_utility, language="shell")
+    
+    
 
 
