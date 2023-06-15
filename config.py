@@ -93,7 +93,7 @@ function update_device_idx {
         useage=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i ${available_devices[$current_device_idx]})
         utilization=$(nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits -i ${available_devices[$current_device_idx]})
         
-        if [ $useage -ge $((total_aviable-max_gpu_memory_gap)) ] || [ $utilization -ge $max_gpu_utilization ]; then
+        if [ $useage -ge $((total_gpu_memory-max_gpu_memory_gap)) ] || [ $utilization -ge $max_gpu_utilization ]; then
             echo "device ${available_devices[$current_device_idx]} is fully booked, try next one"
             sleep 3
             continue
