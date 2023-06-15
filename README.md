@@ -1,7 +1,12 @@
-# exp-comman-generator
+---
+title: Experiment-Command-Generator
+emoji: :robot:
+colorFrom: "#FFD700"
+colorTo: "#FF8C00"
+sdk: streamlit
+sdk_version: "1.22.0"
+app_file: main.py
+pinned: true
+---
 
-```bash
-streamlit run main.py --server.address localhost
-```
-
-My personal tool for experiment command generation. Check this: https://experiment-comamnd-genertator.herokuapp.com/
+Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
