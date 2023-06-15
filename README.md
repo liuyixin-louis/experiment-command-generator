@@ -1,6 +1,6 @@
 ---
 title: Experiment-Command-Generator
-emoji: :robot:
+emoji: ":robot:"
 colorFrom: "#FFD700"
 colorTo: "#FF8C00"
 sdk: streamlit
