@@ -82,6 +82,7 @@ function update_device_idx {
     fi;
 
     # so all the conditions are satisfied, we can update the device idx and run the next experiment
+    cnt_longer_sleep=0
     while true; do
         current_device_idx=$((current_device_idx+1))
         if [ $current_device_idx -ge ${#available_devices[@]} ]; then
@@ -93,9 +94,18 @@ function update_device_idx {
         useage=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i ${available_devices[$current_device_idx]})
         utilization=$(nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits -i ${available_devices[$current_device_idx]})
         
+        
         if [ $useage -ge $((total_gpu_memory-max_gpu_memory_gap)) ] || [ $utilization -ge $max_gpu_utilization ]; then
             echo "device ${available_devices[$current_device_idx]} is fully booked, try next one"
             sleep 3
+            
+            # when cnt_longer_sleep mod $gpu_num == 0, we sleep longer
+            cnt_longer_sleep=$((cnt_longer_sleep+1))
+            cnt_longer_sleep=$(echo "$cnt_longer_sleep%${#available_devices[@]}" | bc)
+            if [ $cnt_longer_sleep -eq 0 ]; then
+                sleep 60
+            fi
+            
             continue
         else
             break
