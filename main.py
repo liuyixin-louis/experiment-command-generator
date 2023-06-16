@@ -78,6 +78,9 @@ memory_rate_max={memory_max_utility}
 constrain_total={constrain_total}
 constrain_mine={"true" if constrain_mine else "false"}
 constrain_rate={"true" if constrain_rate else "false"}
+date_stamp=`date '+%Y-%m-%d-%H'`
+log_dir="logs/$exp_name/$date_stamp"
+mkdir -p $log_dir
 """
 
 

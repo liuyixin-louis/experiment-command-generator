@@ -44,8 +44,8 @@ def parse_base_code(contents, debug = False):
             span_remove_the_first_part = span[span.index("\n"):]
             if not debug:
                 spans_with_type_added_device_control.append((f"\n\ncommand=\"\"\"{span_remove_the_first_part}\"\"\"\n", type_))
-                run_command = "eval $command"
-                run_command += " &"
+                run_command = "eval nohup $command"
+                run_command += "  > $log_dir/$RANDOM$RANDOM.log 2>&1 &"
                 run_command += "\n\n\n"
                 spans_with_type_added_device_control.append((run_command, type_))
             else: 
