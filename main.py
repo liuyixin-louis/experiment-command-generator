@@ -67,10 +67,13 @@ constrain_rate = st.sidebar.number_input("限制率", value=2, min_value=1, max_
 gpu_list = " ".join([str(i) for i in gpu_list])
 setup_for_gpu_utility = f"""
 username={username}
+# available_devices=( 0 1 2 3 4 )
+# available_devices=( 5 6 7 8 9 )
+# available_devices=( 0 1 2 3 4 5 6 7 8 9 )
+available_devices=( {gpu_list} )
 max_gpu_utilization={max_gpu_utilization}
 total_gpu_memory={total_gpu_memory}
 max_gpu_memory_gap={max_gpu_memory_gap}
-available_devices=( {gpu_list} )
 current_device_idx=-1
 sleeptime={sleep_time_after_loading_task}
 cpu_mean_max={cpu_max_utility}
