@@ -80,7 +80,7 @@ cpu_mean_max={cpu_max_utility}
 memory_rate_max={memory_max_utility}
 constrain_total={"true" if constrain_total else "false"}
 constrain_mine={"true" if constrain_mine else "false"}
-constrain_rate={"true" if constrain_rate else "false"}
+constrain_rate={constrain_rate}
 """
 
 
