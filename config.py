@@ -103,6 +103,7 @@ function update_device_idx {
             cnt_longer_sleep=$((cnt_longer_sleep+1))
             cnt_longer_sleep=$(echo "$cnt_longer_sleep%${#available_devices[@]}" | bc)
             if [ $cnt_longer_sleep -eq 0 ]; then
+                echo "sleep 60 seconds since all devices are fully booked"
                 sleep 60
             fi
             
