@@ -35,7 +35,7 @@ def parse_base_code(contents, debug = False):
                 """cd $(cd "$(dirname "$0")";pwd); source gpu_utility.sh\n\n"""
                 , "device_control"))
             spans_with_type_added_device_control.append((span, type_))
-            spans_with_type_added_device_control.append(("""date_stamp=`date '+%Y-%m-%d-%H'`\nog_dir="logs/$exp_name/$date_stamp"\nmkdir -p $log_dir\n""", "logging"))
+            spans_with_type_added_device_control.append(("""date_stamp=`date '+%Y-%m-%d-%H'`\nlog_dir="logs/$exp_name/$date_stamp"\nmkdir -p $log_dir\n""", "logging"))
             # spans_with_type_added_device_control.append((gpu_env, "device_control"))
             # spans_with_type_added_device_control.append((update_device_func, "device_control"))
         elif type_ == "loop":
