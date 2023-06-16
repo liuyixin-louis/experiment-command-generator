@@ -76,8 +76,8 @@ sleeptime={sleep_time_after_loading_task}
 cpu_mean_max={cpu_max_utility}
 memory_rate_max={memory_max_utility}
 constrain_total={constrain_total}
-constrain_mine={constrain_mine}
-constrain_rate={constrain_rate}
+constrain_mine={"true" if constrain_mine else "false"}
+constrain_rate={"true" if constrain_rate else "false"}
 """
 
 
